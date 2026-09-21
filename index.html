@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopoRoute Engine | Enterprise Cloud Grid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h2>TopoRoute</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" id="nav-optimizer" class="nav-item active" onclick="switchView('optimizer')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span data-i18n="route_optimizer">Route Optimizer</span>
+                </a>
+                <a href="#" id="nav-reports" class="nav-item" onclick="switchView('reports')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span data-i18n="reports">Reports</span>
+                </a>
+            </nav>
+
+            <div class="language-picker">
+                <label data-i18n="select_language">Language / भाषा</label>
+                <div class="custom-dropdown" id="lang-dropdown">
+                    <div class="dropdown-selected" onclick="toggleLangMenu()">
+                        <span id="selected-lang-text">English</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <div class="dropdown-options" id="lang-options-list">
+                        <div onclick="selectLanguage('en', 'English')">English</div>
+                        <div onclick="selectLanguage('hi', 'हिन्दी (Hindi)')">हिन्दी (Hindi)</div>
+                        <div onclick="selectLanguage('ml', 'മലയാളം (Malayalam)')">മലയാളം (Malayalam)</div>
+                        <div onclick="selectLanguage('as', 'অসমীয়া (Assamese)')">অসমীয়া (Assamese)</div>
+                        <div onclick="selectLanguage('bn', 'বাংলা (Bengali)')">বাংলা (Bengali)</div>
+                        <div onclick="selectLanguage('ta', 'தமிழ் (Tamil)')">தமிழ் (Tamil)</div>
+                        <div onclick="selectLanguage('te', 'తెలుగు (Telugu)')">తెలుగు (Telugu)</div>
+                        <div onclick="selectLanguage('mr', 'मराठी (Marathi)')">मराठी (Marathi)</div>
+                        <div onclick="selectLanguage('gu', 'ગુજરાતી (Gujarati)')">ગુજરાતી (Gujarati)</div>
+                        <div onclick="selectLanguage('pa', 'ਪੰਜਾਬੀ (Punjabi)')">ਪੰਜਾਬੀ (Punjabi)</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <main class="main-wrapper">
+            <!-- ROUTE OPTIMIZER MAP VIEW -->
+            <div id="view-optimizer" class="view-section active">
+                <div id="map"></div>
+
+                <!-- Map Theme / Layer Switcher -->
+                <div class="layer-selector-box">
+                    <label data-i18n="map_layer">Map Theme / Layer</label>
+                    <select id="layer-select" onchange="changeMapLayer(this.value)">
+                        <option value="topo" data-i18n="layer_topo">Standard Topographical</option>
+                        <option value="satellite" data-i18n="layer_satellite">Satellite Imagery</option>
+                        <option value="tactical" data-i18n="layer_tactical">Night Tactical / Dark Mode</option>
+                    </select>
+                </div>
+
+                <!-- Floating Right Panel -->
+                <div class="floating-panel">
+                    <div class="status-alert">
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-text">
+                            <strong data-i18n="ner_alert_title">NER Region Alert</strong>
+                            <span data-i18n="ner_alert_sub">Complex Terrain Active</span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <form id="route-form">
+                            <div class="input-group">
+                                <label data-i18n="origin_hub">Origin Hub</label>
+                                <select id="origin" required></select>
+                            </div>
+                            <div class="input-group">
+                                <label data-i18n="dest_hub">Destination Hub</label>
+                                <select id="destination" required></select>
+                            </div>
+                            <p class="last-updated" data-i18n="status_ready">Status: Ready for Calculation</p>
+                            <button type="submit" id="predict-btn" class="btn-primary" data-i18n="compute_btn">Compute Route</button>
+                        </form>
+                        <div class="kpi-list">
+                            <div class="kpi-item"><div class="kpi-label"><span class="dot red"></span> <span data-i18n="distance">Distance</span></div><div class="kpi-value" id="val-dist">--</div></div>
+                            <div class="kpi-item"><div class="kpi-label"><span class="dot orange"></span> <span data-i18n="est_time">Est. Time</span></div><div class="kpi-value" id="val-time">--</div></div>
+                            <div class="kpi-item"><div class="kpi-label"><span class="dot green"></span> <span data-i18n="safety_index">AI Safety Index</span></div><div class="kpi-value" id="val-safety">--</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPORTS DASHBOARD VIEW -->
+            <div id="view-reports" class="view-section">
+                <div class="reports-container">
+                    <header class="reports-header">
+                        <h2 data-i18n="rep_title">📊 Comprehensive Route Telemetry & Risk Reports</h2>
+                        <p data-i18n="rep_subtitle">Detailed analysis derived from historical CWC rainfall logs, terrain slope vectors, and machine learning inference.</p>
+                    </header>
+                    <div id="reports-content-body" class="reports-grid">
+                        <div class="report-glass-card">
+                            <h3 data-i18n="rep_norecord_title">No Route Computed Yet</h3>
+                            <p data-i18n="rep_norecord_desc">Please select an origin and destination in the Route Optimizer tab and compute a route to view detailed geological and historical telemetry reports.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
